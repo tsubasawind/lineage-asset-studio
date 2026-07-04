@@ -1,0 +1,8 @@
+# Lineage Asset Studio repository: only source and documentation are tracked.
+*
+!index.html
+!style.css
+!app.js
+!README.md
+!.gitignore
+
