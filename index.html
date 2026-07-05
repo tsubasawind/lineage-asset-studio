@@ -37,13 +37,15 @@
   <div id="progress" class="progress hidden"><div></div><span></span></div>
 
   <main class="layout">
-    <aside class="sidebar">
+    <aside id="leftSidebar" class="sidebar">
+      <div id="sidebarResizer" class="sidebar-resizer" title="拖曳調整側欄寬度"></div>
       <h2>篩選</h2>
       <label>檔名 / UID 搜尋<input id="search" type="search" placeholder="例如 77c 或 IMG_Sprite"></label>
       <label>來源<select id="sourceFilter"><option value="">全部</option></select></label>
       <label>Sprite<select id="spriteFilter"><option value="">全部</option></select></label>
       <label>語言<select id="langFilter"><option value="">全部</option><option>KR</option><option>TW</option><option>CN</option><option>JP</option><option>EN</option></select></label>
       <label>分類<select id="categoryFilter"><option value="">全部</option></select></label>
+      <label>命名狀態<select id="nameStatusFilter"><option value="">全部</option><option value="named">已命名</option><option value="unassigned">未命名</option></select></label>
       <fieldset>
         <legend>尺寸（px）</legend>
         <div class="size-grid"><input id="minWidth" type="number" min="0" placeholder="最小寬"><input id="maxWidth" type="number" min="0" placeholder="最大寬"><input id="minHeight" type="number" min="0" placeholder="最小高"><input id="maxHeight" type="number" min="0" placeholder="最大高"></div>
@@ -51,33 +53,45 @@
       <button id="clearFilters">清除篩選</button>
       <hr>
       <section id="catalogSidebar" class="hidden">
-        <h2>Catalog 分類樹</h2>
-        <button id="addRootCategory" class="quiet">＋ 新增主分類</button>
+        <div class="catalog-tree-title"><h2>Catalog Tree</h2><button id="addRootCategory" title="新增主分類" aria-label="新增主分類">＋</button></div>
+        <label class="tree-search"><span>搜尋分類</span><input id="categoryTreeSearch" type="search" placeholder="搜尋分類…"></label>
         <div id="catalogCategoryTree" class="catalog-category-tree"></div>
         <hr>
       </section>
-      <h2>批次編輯</h2>
+      <section id="normalCategoryPanel">
+        <h2>分類導覽</h2>
+        <div id="categoryBrowser" class="category-browser"></div>
+        <hr>
+      </section>
+      <details id="batchPanel" class="batch-panel">
+      <summary>進階批次編輯</summary>
       <p id="selectionCount">已選 0 張圖片</p>
       <label>套用分類<select id="batchCategory"></select></label>
       <button id="applyCategory" class="primary">套用到已選圖片</button>
       <label>加入 tag<input id="tagInput" placeholder="輸入 tag，可用逗號分隔"></label>
       <button id="addTags">加入到已選圖片</button>
       <button id="clearSelection" class="quiet">清除選取</button>
+      </details>
     </aside>
 
     <section class="content">
       <div class="view-controls">
         <div class="segmented" aria-label="工作模式"><button id="normalMode" class="active">普通模式</button><button id="catalogMode">Catalog Mode</button></div>
-        <div class="segmented" aria-label="檢視模式"><button id="sourceView">來源檢視</button><button id="serialView" class="active">流水號檢視</button></div>
+        <div class="segmented" aria-label="檢視模式"><button id="sourceView">來源檢視</button><button id="serialView" class="active">流水號檢視</button><button id="categoryView">分類檢視</button></div>
         <label>來源快速篩選<select id="quickSource"><option value="">全部</option><option>IMG</option><option>TBT</option><option>PNG</option></select></label>
         <label>Sprite 快速跳轉<select id="quickSprite"><option value="">全部 Sprite</option><option>Sprite</option><option>Sprite00</option><option>Sprite01</option><option>Sprite02</option><option>Sprite03</option><option>Sprite04</option><option>Sprite05</option><option>Sprite06</option><option>Sprite07</option><option>Sprite08</option><option>Sprite09</option><option>Sprite10</option><option>Sprite11</option><option>Sprite12</option><option>Sprite13</option><option>Sprite14</option><option>Sprite15</option></select></label>
       </div>
       <div id="catalogTools" class="catalog-tools hidden">
-        <label>流水號範圍<input id="serialRange" placeholder="100~250、100-250 或 100"></label><button id="selectRange">選取範圍</button>
+        <label>起始流水號<input id="serialRangeStart" type="number" min="0" placeholder="例如 14000"></label>
+        <label>結束流水號<input id="serialRangeEnd" type="number" min="0" placeholder="例如 15000"></label>
+        <button id="applySerialRange">瀏覽此區間</button><button id="clearSerialRange">清除區間</button>
         <button id="previousUnknown">上一段</button><button id="nextUnknown">下一段</button>
-        <button id="toggleUnknown">只看 Unknown</button>
+        <button id="toggleUnknown">只顯示 Unknown</button>
+        <label class="file-button">匯入名稱資料庫 ZIP<input id="importNameZip" type="file" accept=".zip,application/zip"></label>
+        <span id="referenceStatus" class="hint">尚未匯入名稱資料庫</span>
       </div>
-      <div id="sectionInfo" class="section-info hidden"></div>
+      <div class="section-info-row"><div id="sectionInfo" class="section-info hidden"></div><button id="topToggleClassified" class="primary hidden">隱藏已分類</button></div>
+      <nav id="topPagination" class="pagination top-pagination hidden"><button id="topFirstPage">第一頁</button><button id="topPrevPage">上一頁</button><span id="topPageInfo"></span><label class="page-jump">前往第 <input id="topPageInput" type="number" min="1" inputmode="numeric"> 頁</label><button id="topGoPage">跳頁</button><button id="topNextPage">下一頁</button><button id="topLastPage">最後一頁</button></nav>
       <div class="content-head">
         <div><strong id="resultCount">0 個群組 / 0 張圖片</strong><span class="hint">依 sourceType + spriteName + originalNumber 分組</span></div>
         <label class="checkline"><input id="selectPage" type="checkbox">選取本頁</label>
@@ -91,7 +105,7 @@
         <button id="nextPage">下一頁</button><button id="lastPage">最後一頁</button>
       </nav>
     </section>
-    <aside id="catalogInspector" class="catalog-inspector hidden"><h2>目前選取素材</h2><div id="catalogSelectionInfo" class="catalog-selection-info">尚未選取素材</div></aside>
+    <aside id="catalogInspector" class="catalog-inspector hidden"><div id="rightPanelResizer" class="right-panel-resizer" title="拖曳調整資訊面板寬度"></div><h2>Asset Info</h2><div id="catalogSelectionInfo" class="catalog-selection-info">尚未選取素材</div><hr><h2>Name</h2><label>名稱分類<select id="nameTypeFilter"></select></label><label>名稱搜尋／輸入<input id="assetNameInput" placeholder="輸入中文名稱"></label><div id="nameReferenceList" class="name-reference-list"></div><div class="name-actions"><button id="applyAssetName" class="primary">套用名稱</button><button id="renameCatalogName">全域改名</button><button id="clearAssetName" class="danger">清除關聯</button></div><hr><h2>Category</h2><label>名稱資料分類<select id="nameClassEditor"></select></label><button id="updateNameClass" class="ghost dialog-confirm">更新名稱分類</button><p id="assetNameMeta" class="hint"></p></aside>
   </main>
 
   <dialog id="groupDialog">
@@ -109,6 +123,7 @@
     <button data-action="clear-category">清除分類</button><button data-action="clear-tags">清除 Tag</button>
     <button data-action="info">查看資訊</button><button data-action="export-selected">匯出已選素材</button>
   </div>
+  <div id="categoryContextMenu" class="context-menu category-context-menu hidden" role="menu"><button data-tree-action="add">新增分類</button><button data-tree-action="rename">重新命名</button><button data-tree-action="up">上移</button><button data-tree-action="down">下移</button><button class="danger" data-tree-action="delete">刪除</button></div>
   <dialog id="categoryDialog" class="action-dialog">
     <div class="dialog-head"><div><h2>套用分類</h2><p>套用到所有已選圖片</p></div><button data-close="categoryDialog" aria-label="關閉">×</button></div>
     <div id="categoryTree" class="category-tree"></div>
@@ -137,7 +152,7 @@
     <label class="report-search">搜尋資料庫媒體<input id="mediaSearch" type="search" placeholder="檔名或路徑"></label>
     <div class="media-actions"><button id="selectAllMedia">全選結果</button><button id="clearMediaSelection">清除選取</button><span id="mediaSelectedCount"></span></div>
     <div id="mediaFileList" class="media-file-list"></div>
-    <div class="media-export-options"><label>PNG 圖片輸出格式<select id="pngExportFormat"><option value="png">PNG（原檔複製）</option><option value="jpg">JPG（實際轉換）</option></select></label><button id="confirmMediaExport" class="primary">選擇目的資料夾並匯出</button></div>
+    <div class="media-export-options"><label>PNG 圖片輸出格式<select id="pngExportFormat"><option value="png">PNG（原檔複製）</option><option value="jpg">JPG（實際轉換）</option></select></label><label>檔名規則<select id="mediaNameFormat"><option value="original">原始流水號</option><option value="name_uid">中文名稱＋UID（推薦）</option><option value="name">只用中文名稱</option></select></label><label class="checkline"><input id="exportCategoryFolders" type="checkbox">依分類建立資料夾</label><button id="confirmMediaExport" class="primary">選擇目的資料夾並匯出</button></div>
   </dialog>
   <dialog id="mediaImportDialog" class="media-dialog">
     <div class="dialog-head"><div><h2>選擇資料庫存放位置</h2><p id="importFileSummary"></p></div><button data-close="mediaImportDialog" aria-label="關閉">×</button></div>
@@ -147,7 +162,8 @@
     <button id="confirmMediaImport" class="primary dialog-confirm">匯入到目前位置</button>
   </dialog>
   <aside id="selectionHud" class="selection-hud hidden"><span>已選取</span><strong id="hudCount">0 張</strong><span>目前分類</span><strong id="hudCategory">Unknown</strong></aside>
-  <footer id="catalogStatus" class="catalog-status hidden"><span>總素材數 <strong id="statusTotal">0</strong></span><span>已分類 <strong id="statusClassified">0</strong></span><span>未分類 <strong id="statusUnknown">0</strong></span><span>目前選取 <strong id="statusSelected">0</strong></span><span>本次新增分類 <strong id="statusSession">0</strong></span></footer>
+  <div id="namePicker" class="name-picker hidden"><div class="name-picker-head"><select id="namePickerType"></select><button id="closeNamePicker" aria-label="關閉">×</button></div><input id="namePickerSearch" type="search" placeholder="搜尋名稱"><div id="namePickerList" class="name-picker-list"></div></div>
+  <footer id="catalogStatus" class="catalog-status hidden"><span>總素材數 <strong id="statusTotal">0</strong></span><span>已分類 <strong id="statusClassified">0</strong></span><span>未分類 <strong id="statusUnknown">0</strong></span><span>目前選取 <strong id="statusSelected">0</strong></span><span>本次新增分類 <strong id="statusSession">0</strong></span><span>最近備份 <strong id="statusBackup">尚無</strong></span></footer>
   <script src="app.js"></script>
 </body>
 </html>
